@@ -203,7 +203,7 @@ parse_transport(struct ipv4_hdr *ip, uint16_t pkt_len, struct mbuf_ext *ext)
 }
 
 static inline int
-parse_pkts(struct rte_mbuf **mbuf_arr, int nb_rx)
+parse_pkts(struct lcore_conf *conf, struct rte_mbuf **mbuf_arr, int nb_rx)
 {
 	int i, j;
 	struct rte_mbuf *m;
@@ -221,7 +221,7 @@ parse_pkts(struct rte_mbuf **mbuf_arr, int nb_rx)
 		}
 		eth = rte_pktmbuf_mtod(m, struct ether_hdr *);
 		if (unlikely(eth->ether_type != rte_cpu_to_be_16(ETHER_TYPE_IPv4))) {
-			rte_pktmbuf_free(m);
+			send_packet(m, conf, dst_ports[m->port]);
 			continue;
 		}
 		ipv4_hdr = (struct ipv4_hdr *)(eth + 1);
@@ -293,7 +293,7 @@ main_loop(__attribute__((unused)) void *dummy)
 			nb_rx = rte_eth_rx_burst((uint8_t) port_id, conf->queue_id,
 						pkts_burst, MAX_PKT_BURST);
 			conf->stats.rx_pkts += nb_rx;
-			nb_rx = parse_pkts(pkts_burst, nb_rx);
+			nb_rx = parse_pkts(conf, pkts_burst, nb_rx);
                         for (j = 0; j < nb_rx; j++) {
 				acl_p[j] = (uint8_t *)(pkts_burst[j] + 1);
                         }
