@@ -81,8 +81,12 @@ struct str2int {
 
 static const struct str2int proto_map[] = {
 	{"any", 	0},
+	{"icmp", 	1},
+	{"ipip", 	4},
 	{"tcp", 	6},
 	{"udp", 	17},
+	{"gre", 	47},
+	{"esp", 	50},
 	{NULL, 		-1},
 };
 
@@ -419,10 +423,14 @@ init_new_ent:
 	new_ent->idx		= res->idx;
 	new_ent->src_ip		= (res->sprefix.addr.ipv4.s_addr) & ~(rte_cpu_to_be_32((uint32_t)(((1ULL << (32 - res->sprefix.prefixlen)) - 1))));
 	new_ent->dst_ip		= (res->dprefix.addr.ipv4.s_addr) & ~(rte_cpu_to_be_32((uint32_t)(((1ULL << (32 - res->dprefix.prefixlen)) - 1))));
-	new_ent->sport_low	= res->sport_low;
-	new_ent->sport_hi	= res->sport_hi;
-	new_ent->dport_low	= res->dport_low;
-	new_ent->dport_hi	= res->dport_hi;
+	new_ent->proto = str2int(proto_map, res->proto);
+	/* Init ports range only for TCP or UDP */
+	if ((new_ent->proto == 6) || (new_ent->proto == 17)) {
+		new_ent->sport_low	= res->sport_low;
+		new_ent->sport_hi	= res->sport_hi;
+		new_ent->dport_low	= res->dport_low;
+		new_ent->dport_hi	= res->dport_hi;
+	}
 	new_ent->pktlen_low	= res->pktlen_low;
 	new_ent->pktlen_hi	= res->pktlen_hi;
 	new_ent->ttl_low	= res->ttl_low;
@@ -434,7 +442,6 @@ init_new_ent:
 	} else if (strcmp(res->action, "accept") == 0) {
 		new_ent->action		= ACCEPT;
 	}
-	new_ent->proto = str2int(proto_map, res->proto);
 	cmdline_build_acl();
 }
 
@@ -471,7 +478,7 @@ cmdline_parse_token_string_t cmd_set_acl_action =
 
 cmdline_parse_token_string_t cmd_set_acl_proto =
 	TOKEN_STRING_INITIALIZER(struct cmd_set_acl_params,
-				proto, "any#tcp#udp");
+				proto, "any#tcp#udp#icmp#ipip#gre#esp");
 
 cmdline_parse_token_ipaddr_t cmd_set_acl_sprefix =
 	TOKEN_IPV4NET_INITIALIZER(struct cmd_set_acl_params, sprefix);

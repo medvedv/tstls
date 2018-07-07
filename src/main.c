@@ -193,7 +193,9 @@ parse_transport(struct ipv4_hdr *ip, uint16_t pkt_len, struct mbuf_ext *ext)
 			return -1;
 		break;
 	default:
-		return -1;
+		ext->sport = 0;
+		ext->dport = 0;
+		return 0;
 	}
 	ppair = (struct ports_pair *)(ip + 1);
 	ext->sport = ppair->sport;
