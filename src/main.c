@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include <rte_common.h>
 #include <rte_eal.h>
 #include <rte_per_lcore.h>
@@ -384,6 +385,8 @@ main(int argc, char **argv)
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
+
+	signal(SIGPIPE, SIG_IGN);
 
 	ret = rte_eal_init(argc, argv);
 	if (ret < 0) {
